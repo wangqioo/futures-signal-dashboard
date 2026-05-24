@@ -1,9 +1,9 @@
 version: "3.8"
 
 services:
-  trading:
+  dashboard:
     build: .
-    container_name: palm_trading
+    container_name: futures_signal_dashboard
     restart: unless-stopped
     network_mode: host
     volumes:

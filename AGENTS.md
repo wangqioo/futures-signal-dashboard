@@ -1,4 +1,4 @@
-# 期货交易看板 — Agent Guide
+# 期货信号看板 — Agent Guide
 
 ## Repository Intent
 
@@ -12,7 +12,7 @@ Do not move live order placement, account login, broker APIs, payment/subscripti
 
 Prefer these terms in documentation and code-level explanations:
 
-- **期货交易看板**, not trading bot, when describing the product.
+- **期货信号看板**, not trading bot, when describing the product.
 - **公式指标**, not random calculation, when describing TDX/Huiying-derived logic.
 - **主图信号**, not only marker, when describing QRG/破浪/空仓 output on the K-line chart.
 - **波段王副图**, not second chart, when describing K/D momentum panel.

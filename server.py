@@ -1,5 +1,5 @@
 """
-期货交易看板 — Flask API 服务（多品种支持）
+期货信号看板 — Flask API 服务（多品种支持）
 """
 import sys, os, math, time as _time, sqlite3 as _sqlite3, threading as _threading
 sys.path.insert(0, os.path.dirname(__file__))
@@ -729,5 +729,5 @@ def index():
 if __name__ == "__main__":
     _init_db()
     _threading.Thread(target=_scanner_loop, daemon=True).start()
-    print("启动看板服务: http://localhost:8877")
+    print("启动期货信号看板: http://localhost:8877")
     app.run(host="0.0.0.0", port=8877, debug=False, threaded=True)

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目简介
 
-期货交易看板 v3.1，慧赢（平安证券）风格。Flask 后端 + 单页前端，用于实时监控期货合约信号。
+期货信号看板 v3.1，慧赢（平安证券）风格。Flask 后端 + 单页前端，用于实时监控期货合约信号。
 
 ## 运行与部署
 

@@ -45,7 +45,7 @@
 
 ## 主流程文件
 
-整理主流程时，优先改 `server.py`、`dashboard/index.html`、`indicators.py`、`indicators_pkg/` 和 `tdx_parser/`。早期棕榈油单品脚本已经删除，避免它们继续干扰多品种看板逻辑。
+整理主流程时，优先改 `server.py`、`dashboard/index.html`、`indicators.py`、`indicators_pkg/` 和 `tdx_parser/`。早期单品脚本已经删除，避免它们继续干扰多品种看板逻辑。
 
 ## 当前整理优先级
 
