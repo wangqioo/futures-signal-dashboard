@@ -5,9 +5,6 @@
 已实现：
   1. 主图指标（破浪信号 — 黄点做多/绿点做空）
   2. 波段王（K/D动能柱 + 多/空文字信号）
-待实现：
-  3. JLHB 绝路航标（等待公式）
-  4. 三速线（等待公式）
 """
 
 import numpy as np
@@ -177,10 +174,10 @@ def calc_bsd_wang(df):
 
 def get_latest_signals(df):
     """
-    综合信号检测（15分钟K线）
+    综合信号检测
     ──────────────────────────────────
     做多触发：主图黄点（破浪）AND 波段王 K>30 AND K>=D
-    做空触发：主图绿点（破浪）AND 波段王 K<80 AND K<=D
+    做空触发：主图绿点（空仓）AND 波段王 K<80 AND K<=D
     ──────────────────────────────────
     返回：(signals_dict, meta_dict)
     """
@@ -194,10 +191,12 @@ def get_latest_signals(df):
     kong_cang = bool(last.get("空仓", False))           # 主图绿点
     K_val     = float(last.get("K", 0))
     D_val     = float(last.get("D", 0))
+    long_filter = K_val > 30 and K_val >= D_val
+    short_filter = K_val < 80 and K_val <= D_val
 
     signals = {
-        "做多":      po_lang,     # 仅黄点破浪 CROSS(QRG,-10)
-        "做空":      kong_cang,   # 仅绿点空仓 QRG==-50 AND REF(QRG,1)>=-30
+        "做多":      po_lang and long_filter,
+        "做空":      kong_cang and short_filter,
         "破浪_黄点": po_lang,
         "空仓_绿点": kong_cang,
     }
@@ -211,21 +210,27 @@ def get_latest_signals(df):
         "支撑":      round(float(last.get("支撑", 0)), 1),
         "K_gt30":   K_val > 30,
         "K_lt80":   K_val < 80,
+        "K_ge_D":    K_val >= D_val,
+        "K_le_D":    K_val <= D_val,
     }
     return signals, meta
 
 
 if __name__ == "__main__":
-    # 快速测试
-    from data_fetcher import get_palm_oil_data_akshare
-    df = get_palm_oil_data_akshare(days=60)
-    if df is not None:
-        signals, meta = get_latest_signals(df)
-        print("\n=== 最新指标状态 ===")
-        print(f"时间: {meta['datetime']}  收盘: {meta['close']}")
-        print(f"QRG: {meta['QRG']}  支撑: {meta['支撑']}")
-        print(f"K: {meta['K']}  D: {meta['D']}")
-        print("\n=== 信号 ===")
-        for k, v in signals.items():
-            status = "★ 触发！" if v else "  未触发"
-            print(f"  {k}: {status}")
+    import sys
+    import akshare as ak
+
+    symbol = sys.argv[1] if len(sys.argv) > 1 else "P0"
+    period = sys.argv[2] if len(sys.argv) > 2 else "15"
+    df = ak.futures_zh_minute_sina(symbol=symbol, period=period)
+    df.columns = [c.lower() for c in df.columns]
+    df["date"] = pd.to_datetime(df["datetime"])
+    signals, meta = get_latest_signals(df)
+    print("=== 最新指标状态 ===")
+    print(f"品种: {symbol}  周期: {period}")
+    print(f"时间: {meta['datetime']}  收盘: {meta['close']}")
+    print(f"QRG: {meta['QRG']}  支撑: {meta['支撑']}")
+    print(f"K: {meta['K']}  D: {meta['D']}")
+    print("=== 信号 ===")
+    for k, v in signals.items():
+        print(f"{k}: {'触发' if v else '未触发'}")

@@ -10,14 +10,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # 本地运行（端口 8877）
-python server.py
+python -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python server.py
 
 # Docker 部署
-docker-compose up -d
-docker-compose build && docker-compose up -d   # 代码有改动时重建
+docker compose up -d --build
 ```
 
-无测试命令，无 lint 工具。验证方式：直接访问 http://localhost:8877 查看界面。
+无测试套件，无 lint 工具。基础验证：
+
+```bash
+python -m compileall -q .
+curl http://localhost:8877/api/symbols
+curl "http://localhost:8877/api/data?symbol=P0&period=3&mode=update"
+```
 
 ## 架构
 
@@ -29,6 +36,7 @@ indicators_pkg/     可热加载指标插件，每个 .py 文件需有 META + co
 tdx_parser/         TDX/通达信公式 → Python 插件代码 的解析器
 dashboard/index.html  单文件前端（CSS + JS 全嵌入，~1500行）
 data/               日线数据本地 CSV 缓存（daily_<CODE>.csv）
+scheduler.py        可选独立调度器，向 server.py 推送信号
 ```
 
 ## 数据流
@@ -43,13 +51,14 @@ data/               日线数据本地 CSV 缓存（daily_<CODE>.csv）
 
 **120分钟K线**：akshare 无直接接口，拉 60分钟后用 `pd.resample('120min')` 聚合（见 `server.py:get_minute_data()`）。
 
-**周线**：需拉日线数据后按自然周（`resample('W-FRI')`）聚合，目前尚未实现。
+**周线**：拉日线数据后按自然周（`resample('W-FRI')`）聚合，已在 `server.py:get_weekly_data()` 实现。
 
 **信号逻辑**：
 - 做多：`破浪`=QRG上穿-10 且 K>30 且 K≥D
 - 做空：`空仓`=QRG跌至-50（前值≥-30）且 K<80 且 K≤D
+- `破浪_黄点` / `空仓_绿点` 保留主图单项条件，`做多` / `做空` 是最终提醒信号。
 
-**全自选扫描**：`scanAllWatchlist()` 每60秒在前端触发，固定用30分钟周期，不受图表当前周期影响（`dashboard/index.html` 第1173行）。
+**全自选扫描**：`scanAllWatchlist()` 在前端触发，使用用户选择的触发周期和周期限速；后端也有 `_scanner_loop()` 扫描当前触发周期。
 
 **配色规范（慧赢风格）**：
 - 阳线：红色 `#ef5350`，阴线：白色
@@ -76,4 +85,4 @@ data/               日线数据本地 CSV 缓存（daily_<CODE>.csv）
 - 前端是单一 HTML 文件，不拆分。改 UI 就改 `dashboard/index.html`。
 - `server.py` 既是数据获取层也是路由层，保持这种合并结构，不引入蓝图或新文件。
 - 日线数据本地缓存（`data/` 目录），akshare 失败时自动回退缓存。
-- 目前无 `scheduler.py`，后端定时扫描逻辑尚未实现，信号扫描全在前端 `setInterval` 驱动。
+- `scheduler.py` 已存在，但只是可选 sidecar。默认 `python server.py` 已内置后端扫描线程。
